@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Silent Speech Recognition</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px;
+      background: #f9f9f9;
+      margin: 0;
+    }
+    video {
+      border: 2px solid #333;
+      border-radius: 10px;
+      width: 400px;
+      height: 300px;
+      margin-bottom: 15px;
+      position: relative;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px 5px;
+      cursor: pointer;
+      border-radius: 6px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #output {
+      margin-top: 20px;
+      font-size: 24px;
+      color: #008800;
+      font-weight: bold;
+    }
+    /* Sections hidden by default */
+    section {
+      display: none;
+      max-width: 600px;
+      margin: auto;
+    }
+    section.active {
+      display: block;
+    }
+    /* Face box overlay */
+    .face-box {
+      position: absolute;
+      border: 3px solid #00c853;
+      border-radius: 12px;
+      top: 70px; /* Adjust to center the face in video */
+      left: 70px;
+      width: 260px;
+      height: 160px;
+      pointer-events: none;
+      box-shadow: 0 0 15px #00c853;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 10px #00c853; }
+      50% { box-shadow: 0 0 20px #00ff70; }
+    }
+    /* Quick Phrases Grid */
+    .phrases-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .phrase-btn {
+      background-color: #28a745;
+      color: white;
+      font-weight: bold;
+    }
+    .phrase-btn:hover {
+      background-color: #1e7e34;
+    }
+    /* Feedback list */
+    ul.feedback-list {
+      list-style: none;
+      padding: 0;
+      text-align: left;
+      max-width: 400px;
+      margin: 20px auto 0;
+      font-size: 18px;
+      color: #444;
+    }
+    ul.feedback-list li {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Home Page (Start Screen) -->
+  <section id="home" class="active">
+    <h1>Silent Speech Recognition</h1>
+    <p>Choose an option to begin:</p>
+    <button id="startLipReadingBtn">Start Lip-Reading</button>
+    <button id="quickPhrasesBtn">Quick Phrases</button>
+  </section>
+
+  <!-- Calibration & Camera Setup -->
+  <section id="calibration">
+    <h2>Calibration & Camera Setup</h2>
+    <div style="position: relative; display: inline-block;">
+      <video id="webcam" autoplay muted playsinline></video>
+      <div class="face-box"></div>
+    </div>
+    <p>Please position your face inside the green box and click “Calibrate”</p>
+    <button id="calibrateBtn">Calibrate</button>
+  </section>
+
+  <!-- Live Lip Reading -->
+  <section id="liveReading">
+    <h2>Live Lip Reading in Action</h2>
+    <div style="position: relative; display: inline-block;">
+      <video id="liveVideo" autoplay muted playsinline></video>
+    </div>
+    <div id="output">Prediction: <span id="prediction">None</span></div>
+    <button id="stopReadingBtn">Stop</button>
+  </section>
+
+  <!-- Quick Phrases -->
+  <section id="quickPhrases">
+    <h2>Quick Phrases</h2>
+    <p>Select a phrase to display:</p>
+    <div class="phrases-grid">
+      <button class="phrase-btn">Please wait</button>
+      <button class="phrase-btn">Can I join?</button>
+      <button class="phrase-btn">I need help</button>
+    </div>
+    <button id="backFromPhrasesBtn" style="margin-top: 30px; background-color:#6c757d;">Back</button>
+  </section>
+
+  <!-- Review & Feedback Dashboard -->
+  <section id="feedback">
+    <h2>Review & Feedback</h2>
+    <p><strong>Recognition Accuracy:</strong> 85%</p>
+    <p><strong>Missed words:</strong> please, classroom</p>
+    <h3>Suggestions for better articulation:</h3>
+    <ul class="feedback-list">
+      <li>Try to articulate “please” more clearly.</li>
+      <li>Practice slower lip movements for “classroom.”</li>
+    </ul>
+    <button id="backFromFeedbackBtn" style="margin-top: 30px; background-color:#6c757d;">Back to Home</button>
+  </section>
+
+<script>
+  // Section references
+  const home = document.getElementById('home');
+  const calibration = document.getElementById('calibration');
+  const liveReading = document.getElementById('liveReading');
+  const quickPhrases = document.getElementById('quickPhrases');
+  const feedback = document.getElementById('feedback');
+
+  const webcamVideo = document.getElementById('webcam');
+  const liveVideo = document.getElementById('liveVideo');
+  const predictionSpan = document.getElementById('prediction');
+
+  let mediaStream;
+  let mediaRecorder;
+  let recordedChunks = [];
+
+  // Start webcam stream for calibration
+  async function startWebcam() {
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      webcamVideo.srcObject = mediaStream;
+      liveVideo.srcObject = mediaStream;
+    } catch (err) {
+      alert("Could not access webcam. Please check permissions.");
+      console.error(err);
+    }
+  }
+
+  // Navigation handlers
+  document.getElementById('startLipReadingBtn').addEventListener('click', () => {
+    home.classList.remove('active');
+    calibration.classList.add('active');
+    startWebcam();
+  });
+
+  document.getElementById('quickPhrasesBtn').addEventListener('click', () => {
+    home.classList.remove('active');
+    quickPhrases.classList.add('active');
+  });
+
+  document.getElementById('calibrateBtn').addEventListener('click', () => {
+    // Here you can add actual calibration logic (lighting, face tracking)
+    alert("Calibration complete! Starting live lip reading...");
+    calibration.classList.remove('active');
+    liveReading.classList.add('active');
+    predictionSpan.innerText = "Listening...";
+    // Start recording or model inference logic can go here
+  });
+
+  document.getElementById('stopReadingBtn').addEventListener('click', () => {
+    liveReading.classList.remove('active');
+    feedback.classList.add('active');
+    // Simulate feedback info here
+  });
+
+  document.getElementById('backFromPhrasesBtn').addEventListener('click', () => {
+    quickPhrases.classList.remove('active');
+    home.classList.add('active');
+  });
+
+  document.getElementById('backFromFeedbackBtn').addEventListener('click', () => {
+    feedback.classList.remove('active');
+    home.classList.add('active');
+  });
+
+  // Quick phrases button click handlers
+  document.querySelectorAll('.phrase-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      alert(`Phrase selected: "${btn.textContent}"`);
+      // Here you can display phrase text or send to speech output
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome - Silent Speech</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+      animation: fadeIn 1.5s ease-in-out;
+    }
+
+    .start-btn {
+      padding: 15px 30px;
+      font-size: 1rem;
+      color: #fff;
+      background-color: #00c6ff;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.4s;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.05);
+      background-color: #0072ff;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Silent Speech Recognition</h1>
+  <p>Communicate without sound. Powered by vision and AI.</p>
+  <button class="start-btn" onclick="startApp()">Get Started</button>
+
+  <script>
+    function startApp() {
+      window.location.href = "index.html";  // change path if index.html is elsewhere
+    }
+  </script>
+
+</body>
+</html>
